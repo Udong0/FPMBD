@@ -1,7 +1,10 @@
 <?php
+// LOKASI: /myitstutor/dashboard_mahasiswa.php
+
 require_once 'includes/header.php';
 require_once 'config/db_connect.php';
 
+// Keamanan: Cek apakah user sudah login dan perannya adalah mahasiswa
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] != 'mahasiswa') {
     echo "<div class='alert alert-danger'>Akses Ditolak. Anda harus login sebagai Mahasiswa untuk mengakses halaman ini.</div>";
     require_once 'includes/footer.php';
@@ -18,8 +21,9 @@ $nrp_mahasiswa = $_SESSION['user_id'];
 
 <div class="row">
     <div class="col-md-8">
-
-        <h3>Kelas yang Anda Ikuti</h3>
+        
+        <!-- KELAS YANG SAYA IKUTI -->
+        <h3 class="mb-3">Kelas yang Anda Ikuti</h3>
         <div class="list-group mb-5">
             <?php
             $sql_my_kelas = "SELECT k.ID_Kelas, k.Matkul, t.Nama_Tutor, k.Status_kelas
@@ -51,16 +55,21 @@ $nrp_mahasiswa = $_SESSION['user_id'];
             ?>
         </div>
 
-        <h3>Daftar Kelas Tersedia</h3>
+        <!-- DAFTAR KELAS TERSEDIA -->
+        <h3 class="mb-3">Daftar Kelas Tersedia</h3>
         <div class="list-group">
             <?php
+            // Query ini mengambil kelas yang belum diikuti oleh mahasiswa yang sedang login
             $sql_kelas = "SELECT k.ID_Kelas, k.Matkul, k.Tanggal_Kelas, k.kelas_start, t.Nama_Tutor 
                           FROM Kelas k
                           JOIN Tutor t ON k.Tutor_NRP_Tutor = t.NRP_Tutor
-                          WHERE k.Status_kelas IN ('Aktif', 'Dijadwalkan')
+                          WHERE k.Status_kelas IN ('Aktif', 'Dijadwalkan') AND k.ID_Kelas NOT IN (SELECT Kelas_ID FROM mahasiswa_kelas WHERE Mahasiswa_NRP = ?)
                           ORDER BY k.Tanggal_Kelas, k.kelas_start";
                           
-            $result_kelas = mysqli_query($conn, $sql_kelas);
+            $stmt_kelas = mysqli_prepare($conn, $sql_kelas);
+            mysqli_stmt_bind_param($stmt_kelas, "s", $nrp_mahasiswa);
+            mysqli_stmt_execute($stmt_kelas);
+            $result_kelas = mysqli_stmt_get_result($stmt_kelas);
             
             if (mysqli_num_rows($result_kelas) > 0) {
                 while ($kelas = mysqli_fetch_assoc($result_kelas)) {
@@ -68,26 +77,31 @@ $nrp_mahasiswa = $_SESSION['user_id'];
                     $jam_format = date("H:i", strtotime($kelas['kelas_start']));
 
                     echo '<a href="detail_kelas.php?id=' . $kelas['ID_Kelas'] . '" class="list-group-item list-group-item-action">';
-                    echo '<div class="d-flex w-100 justify-content-between">';
-                    echo '<h5 class="mb-1">' . htmlspecialchars($kelas['Matkul']) . '</h5>';
-                    echo '<small>Tanggal: ' . $tanggal_format . ' | Jam: ' . $jam_format . '</small>';
-                    echo '</div>';
-                    echo '<p class="mb-1">Tutor: ' . htmlspecialchars($kelas['Nama_Tutor']) . '</p>';
+                    echo '  <div class="d-flex w-100 justify-content-between">';
+                    echo '      <h5 class="mb-1">' . htmlspecialchars($kelas['Matkul']) . '</h5>';
+                    echo '      <small>Tanggal: ' . $tanggal_format . ' | Jam: ' . $jam_format . '</small>';
+                    echo '  </div>';
+                    echo '  <p class="mb-1">Tutor: ' . htmlspecialchars($kelas['Nama_Tutor']) . '</p>';
                     echo '</a>';
                 }
             } else {
                 echo '<p class="text-muted">Saat ini tidak ada kelas lain yang tersedia.</p>';
             }
+            mysqli_stmt_close($stmt_kelas);
             ?>
         </div>
     </div>
     <div class="col-md-4">
-        <h3>Menu Anda</h3>
-        <div class="list-group">
-            <a href="dashboard_mahasiswa.php" class="list-group-item list-group-item-action active">Cari & Gabung Kelas</a>
-            <a href="#" class="list-group-item list-group-item-action">Riwayat Transaksi</a>
-            <a href="daftar_tutor.php" class="list-group-item list-group-item-action">Daftar Menjadi Tutor</a>
-            <a href="laporkan_pelanggaran.php" class="list-group-item list-group-item-action text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Laporkan Pelanggaran</a>
+        <div class="card">
+            <div class="card-header">
+                <h4>Menu Anda</h4>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="dashboard_mahasiswa.php" class="list-group-item list-group-item-action active">Cari & Gabung Kelas</a>
+                <a href="riwayat_transaksi.php" class="list-group-item list-group-item-action">Riwayat Transaksi</a>
+                <a href="daftar_tutor.php" class="list-group-item list-group-item-action">Daftar Menjadi Tutor</a>
+                <!-- Tombol laporkan pelanggaran yang tidak relevan sudah dihapus -->
+            </div>
         </div>
     </div>
 </div>
