@@ -79,18 +79,68 @@ $user_nama = $_SESSION['user_nama'];
 
 
 
-<h3>Menu Panel Kontrol Lainnya</h3>
+
+<!-- Panel Persetujuan Pencairan Dana -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header">
+        <h4><i class="fas fa-hand-holding-usd me-2"></i>Persetujuan Pencairan Dana</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID Pencairan</th>
+                        <th>Nama Tutor</th>
+                        <th>Jumlah</th>
+                        <th>Tanggal Permintaan</th>
+                        <th style="width: 20%;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    // PERBAIKAN: Menggunakan nama kolom 'Tanggal_request' dan 'Status' sesuai skema DB yang kita buat
+                    $sql_pencairan = "SELECT p.ID_pencairan, t.Nama_Tutor, p.Jumlah, p.Tanggal_request FROM Pencairan p JOIN Tutor t ON p.Tutor_NRP_Tutor = t.NRP_Tutor WHERE p.Status = 'Menunggu' ORDER BY p.Tanggal_request ASC";
+                    $result_pencairan = mysqli_query($conn, $sql_pencairan);
+                    if ($result_pencairan && mysqli_num_rows($result_pencairan) > 0):
+                        while($pencairan = mysqli_fetch_assoc($result_pencairan)):
+                    ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($pencairan['ID_pencairan']); ?></td>
+                        <td><?php echo htmlspecialchars($pencairan['Nama_Tutor']); ?></td>
+                        <td>Rp <?php echo number_format($pencairan['Jumlah'], 0, ',', '.'); ?></td>
+                        <td><?php echo date("d M Y, H:i", strtotime($pencairan['Tanggal_request'])); ?></td>
+                        <td>
+                            <!-- Form ini seharusnya mengarah ke file proses yang benar -->
+                            <form action="proses_verifikasi_pencairan.php" method="POST" style="display:inline;">
+                                <input type="hidden" name="id_pencairan" value="<?php echo $pencairan['ID_pencairan']; ?>">
+                                <button type="submit" name="action" value="setuju" class="btn btn-success btn-sm">Setujui</button>
+                                <button type="submit" name="action" value="tolak" class="btn btn-danger btn-sm">Tolak</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; else: ?>
+                    <tr><td colspan="5" class="text-center text-muted">Tidak ada permintaan pencairan dana baru.</td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- Menu Panel Kontrol Lainnya -->
+<h3 class="mt-5">Menu Panel Kontrol Lainnya</h3>
 <div class="list-group">
     <a href="manajemen_pelanggaran.php" class="list-group-item list-group-item-action"><i class="fas fa-gavel me-2"></i>Manajemen Pelanggaran</a>
-    <a href="manajemen_tutor.php" class="list-group-item list-group-item-action">Manajemen Role Tutor</a>
-    <a href="ajukan_peminjaman.php" class="list-group-item list-group-item-action">Ajukan Peminjaman Ruangan</a>
-    <a href="#" class="list-group-item list-group-item-action">Manajemen Peminjaman Ruangan</a>
-    <a href="#" class="list-group-item list-group-item-action">Persetujuan Pencairan Dana Tutor</a>
-    <li class="list-group-item list-group-item-secondary">Lihat Semua Data</li>
-    <a href="view_mahasiswa.php" class="list-group-item list-group-item-action">Daftar Mahasiswa</a>
-    <a href="view_tutors.php" class="list-group-item list-group-item-action">Daftar Tutor</a>
-    <a href="view_kelas.php" class="list-group-item list-group-item-action">Daftar Kelas</a>
-    <a href="view_transaksi.php" class="list-group-item list-group-item-action">Riwayat Transaksi</a>
+    <a href="manajemen_tutor.php" class="list-group-item list-group-item-action"><i class="fas fa-users-cog me-2"></i>Manajemen Role Tutor</a>
+    <a href="ajukan_peminjaman.php" class="list-group-item list-group-item-action"><i class="fas fa-door-open me-2"></i>Ajukan Peminjaman Ruangan</a>
+    
+    <li class="list-group-item list-group-item-secondary mt-3">Lihat Semua Data</li>
+    <a href="view_mahasiswa.php" class="list-group-item list-group-item-action"><i class="fas fa-user-graduate me-2"></i>Daftar Mahasiswa</a>
+    <a href="view_tutors.php" class="list-group-item list-group-item-action"><i class="fas fa-chalkboard-teacher me-2"></i>Daftar Tutor</a>
+    <a href="view_kelas.php" class="list-group-item list-group-item-action"><i class="fas fa-school me-2"></i>Daftar Kelas</a>
+    <a href="view_transaksi.php" class="list-group-item list-group-item-action"><i class="fas fa-file-invoice-dollar me-2"></i>Riwayat Transaksi</a>
 </div>
 <?php
 require_once 'includes/footer.php';
