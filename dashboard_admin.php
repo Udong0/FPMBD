@@ -77,6 +77,8 @@ $user_nama = $_SESSION['user_nama'];
     </div>
 </div>
 
+
+
 <h3>Menu Panel Kontrol Lainnya</h3>
 <div class="list-group">
     <a href="manajemen_pelanggaran.php" class="list-group-item list-group-item-action"><i class="fas fa-gavel me-2"></i>Manajemen Pelanggaran</a>
@@ -90,7 +92,6 @@ $user_nama = $_SESSION['user_nama'];
     <a href="view_kelas.php" class="list-group-item list-group-item-action">Daftar Kelas</a>
     <a href="view_transaksi.php" class="list-group-item list-group-item-action">Riwayat Transaksi</a>
 </div>
-
 <?php
 require_once 'includes/footer.php';
 ?>
