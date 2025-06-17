@@ -1,5 +1,5 @@
 <?php
-// manajemen_peminjaman_sarpras.php
+// LOKASI: /myitstutor/manajemen_peminjaman_sarpras.php
 // Halaman untuk Sarpras mengelola permohonan peminjaman ruangan.
 
 include('includes/header.php');
@@ -15,46 +15,53 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] != 'sarpras') {
     exit();
 }
 
-// Menggunakan 'user_id' yang konsisten dengan sistem login Anda
 $sarpras_id = $_SESSION['user_id'];
 $status_msg = '';
 
-// --- Logika Proses Form Persetujuan/Penolakan ---
+// --- Proses Persetujuan/Penolakan ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $peminjaman_id = $_POST['peminjaman_id'];
-    $status_baru = $_POST['action']; // 'Disetujui' atau 'Ditolak'
+    $status_baru   = $_POST['action']; // 'Disetujui' atau 'Ditolak'
 
-    if ($status_baru == 'Disetujui' || $status_baru == 'Ditolak') {
-        // Query diperbarui untuk mencatat siapa yang memproses
+    if (in_array($status_baru, ['Disetujui','Ditolak'])) {
         $query_update = "
             UPDATE Peminjaman_Ruangan 
-            SET Status_peminjaman = ?, Sarpras_ID_sarpras = ?, Tanggal_Terbit = NOW()
-            WHERE ID_Peminjaman = ? AND Status_peminjaman = 'Menunggu'
+            SET Status_peminja   = ?, 
+                Sarpras_ID_sarpras = ?, 
+                Tanggal_Terbit     = NOW()
+            WHERE ID_Peminjaman = ?
+              AND Status_peminja = 'Menunggu'
         ";
         $stmt = $conn->prepare($query_update);
-        // Mengikat 3 parameter: status, ID sarpras, ID peminjaman
         $stmt->bind_param("sss", $status_baru, $sarpras_id, $peminjaman_id);
-        
+
         if ($stmt->execute() && $stmt->affected_rows > 0) {
             $status_msg = "<div class='alert alert-success'>Status permohonan berhasil diperbarui.</div>";
         } else {
-            $status_msg = "<div class='alert alert-danger'>Gagal memperbarui status. Mungkin permohonan sudah diproses sebelumnya.</div>";
+            $status_msg = "<div class='alert alert-danger'>Gagal memperbarui status. Mungkin sudah diproses.</div>";
         }
         $stmt->close();
     }
 }
 
-// --- Logika Ambil Data untuk Tampilan ---
+// --- Ambil Data untuk Tampilan ---
 $query_peminjaman = "
-    SELECT p.*, r.Nama_Ruangan, a.Nama_admin 
+    SELECT 
+        p.ID_Peminjaman,
+        p.Tanggal_Pinjam,
+        p.Ruangan_tujuan,
+        p.Status_peminja,
+        r.Nama_Ruangan,
+        a.Nama_admin
     FROM Peminjaman_Ruangan p
     JOIN Ruangan r ON p.Ruangan_ID_Ruangan = r.ID_Ruangan
-    JOIN admin a ON p.admin_ID_admin = a.ID_Admin
-    ORDER BY FIELD(p.Status_peminjaman, 'Menunggu', 'Disetujui', 'Ditolak'), p.Tanggal_Pinjam DESC
+    JOIN admin a   ON p.admin_ID_admin       = a.ID_Admin
+    ORDER BY 
+      FIELD(p.Status_peminja, 'Menunggu','Disetujui','Ditolak'),
+      p.Tanggal_Pinjam DESC
 ";
 $result = $conn->query($query_peminjaman);
 $peminjaman_list = $result->fetch_all(MYSQLI_ASSOC);
-
 ?>
 
 <div class="container mt-5">
@@ -73,7 +80,7 @@ $peminjaman_list = $result->fetch_all(MYSQLI_ASSOC);
                             <th>Tgl Pinjam</th>
                             <th>Pemohon (Admin)</th>
                             <th>Ruangan</th>
-                            <th>Tujuan</th>
+                            <th>Kelas</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -82,27 +89,29 @@ $peminjaman_list = $result->fetch_all(MYSQLI_ASSOC);
                         <?php if (count($peminjaman_list) > 0): ?>
                             <?php foreach ($peminjaman_list as $item): ?>
                             <tr>
-                                <td><?php echo date('d M Y', strtotime($item['Tanggal_Terbit'])); ?></td>
+                                <td><?php echo date('d M Y', strtotime($item['Tanggal_Terbit'] ?? $item['Tanggal_Pinjam'])); ?></td>
                                 <td class="fw-bold"><?php echo date('d M Y, H:i', strtotime($item['Tanggal_Pinjam'])); ?></td>
                                 <td><?php echo htmlspecialchars($item['Nama_admin']); ?></td>
                                 <td><?php echo htmlspecialchars($item['Nama_Ruangan']); ?></td>
                                 <td><?php echo htmlspecialchars($item['Ruangan_tujuan']); ?></td>
                                 <td>
                                     <?php 
-                                        $status_class = 'bg-secondary';
-                                        if ($item['Status_peminjaman'] == 'Disetujui') $status_class = 'bg-success';
-                                        if ($item['Status_peminjaman'] == 'Ditolak') $status_class = 'bg-danger';
-                                        if ($item['Status_peminjaman'] == 'Menunggu') $status_class = 'bg-warning text-dark';
+                                        $cls = 'bg-secondary';
+                                        if ($item['Status_peminja'] == 'Disetujui') $cls = 'bg-success';
+                                        if ($item['Status_peminja'] == 'Ditolak')   $cls = 'bg-danger';
+                                        if ($item['Status_peminja'] == 'Menunggu')  $cls = 'bg-warning text-dark';
                                     ?>
-                                    <span class="badge <?php echo $status_class; ?>"><?php echo htmlspecialchars($item['Status_peminjaman']); ?></span>
+                                    <span class="badge <?php echo $cls; ?>">
+                                        <?php echo htmlspecialchars($item['Status_peminja']); ?>
+                                    </span>
                                 </td>
                                 <td>
-                                    <?php if ($item['Status_peminjaman'] == 'Menunggu'): ?>
-                                    <form action="manajemen_peminjaman_sarpras.php" method="POST" class="d-flex">
-                                        <input type="hidden" name="peminjaman_id" value="<?php echo htmlspecialchars($item['ID_Peminjaman']); ?>">
-                                        <button type="submit" name="action" value="Disetujui" class="btn btn-sm btn-success flex-grow-1">Setujui</button>
-                                        <button type="submit" name="action" value="Ditolak" class="btn btn-sm btn-danger ms-1 flex-grow-1">Tolak</button>
-                                    </form>
+                                    <?php if ($item['Status_peminja'] == 'Menunggu'): ?>
+                                        <form action="manajemen_peminjaman_sarpras.php" method="POST" class="d-flex">
+                                            <input type="hidden" name="peminjaman_id" value="<?php echo htmlspecialchars($item['ID_Peminjaman']); ?>">
+                                            <button type="submit" name="action" value="Disetujui" class="btn btn-sm btn-success flex-grow-1">Setujui</button>
+                                            <button type="submit" name="action" value="Ditolak"   class="btn btn-sm btn-danger  ms-1 flex-grow-1">Tolak</button>
+                                        </form>
                                     <?php else: ?>
                                         <button class="btn btn-sm btn-secondary" disabled>Selesai</button>
                                     <?php endif; ?>
