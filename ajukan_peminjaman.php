@@ -31,11 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_peminjaman']))
     // Untuk contoh ini, kita butuh setidaknya satu user Sarpras di database
     $sarpras_id_default = 'SPR001'; // Ganti dengan ID Sarpras yang valid
 
-    $query_insert = "
-        INSERT INTO Peminjaman_Ruangan 
-        (ID_Peminjaman, Ruangan_tujuan, Tanggal_Pinjam, admin_ID_admin, Ruangan_ID_Ruangan, Sarpras_ID_sarpras, Status_peminjaman) 
-        VALUES (?, ?, ?, ?, ?, ?, 'Menunggu')
-    ";
+   $query_insert = "
+    INSERT INTO Peminjaman_Ruangan 
+    (ID_Peminjaman, Ruangan_tujuan, Tanggal_Pinjam, admin_ID_admin, Ruangan_ID_Ruangan, Sarpras_ID_sarpras, Status_peminja) 
+    VALUES (?, ?, ?, ?, ?, ?, 'Menunggu')
+";
+
     $stmt_insert = $conn->prepare($query_insert);
     $stmt_insert->bind_param("ssssss", $id_peminjaman, $tujuan_peminjaman, $tanggal_pinjam, $admin_id, $ruangan_id, $sarpras_id_default);
 
