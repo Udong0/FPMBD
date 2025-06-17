@@ -85,7 +85,9 @@ $user_nama = $_SESSION['user_nama'];
     <a href="manajemen_tutor.php" class="list-group-item list-group-item-action">Manajemen Role Tutor</a>
     <a href="ajukan_peminjaman.php" class="list-group-item list-group-item-action">Ajukan Peminjaman Ruangan</a>
     <a href="#" class="list-group-item list-group-item-action">Manajemen Peminjaman Ruangan</a>
-    <a href="#" class="list-group-item list-group-item-action">Persetujuan Pencairan Dana Tutor</a>
+    <a href="manajemen_pencairan.php" class="list-group-item list-group-item-action">
+  Persetujuan Pencairan Dana Tutor
+</a>
     <li class="list-group-item list-group-item-secondary">Lihat Semua Data</li>
     <a href="view_mahasiswa.php" class="list-group-item list-group-item-action">Daftar Mahasiswa</a>
     <a href="view_tutors.php" class="list-group-item list-group-item-action">Daftar Tutor</a>
