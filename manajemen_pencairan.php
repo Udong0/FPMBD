@@ -1,20 +1,16 @@
 <?php
-// FILE: manajemen_pencairan.php
 require_once 'includes/header.php';
 require_once 'config/db_connect.php';
 
-// Keamanan: hanya admin
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
     header("Location: login.php?error=access_denied");
     exit();
 }
 
-// Pesan status (optional)
 if (isset($_GET['status']) && $_GET['status'] === 'sukses') {
     echo "<div class='alert alert-success'>Permintaan berhasil diproses.</div>";
 }
 
-// Ambil data permintaan pencairan
 $sql = "
   SELECT p.ID_Pencairan, p.Jumlah, p.Tanggal_Permintaan, p.Status,
          p.Tanggal_Persetujuan, t.Nama_Tutor
