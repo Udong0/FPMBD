@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 require_once 'config/db_connect.php';
 session_start();
 
-// Keamanan: hanya admin
+// Keamanan
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
     header("Location: login.php?error=access_denied");
     exit();

@@ -1,16 +1,10 @@
 <?php
-// LOKASI: /myitstutor/manajemen_peminjaman_sarpras.php
-// Halaman untuk Sarpras mengelola permohonan peminjaman ruangan.
+// LOKASI: /FPMBD/manajemen_peminjaman_sarpras.php
+require_once 'includes/header.php';
+require_once 'config/db_connect.php';
 
-include('includes/header.php');
-include('config/db_connect.php');
-
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Keamanan: Pastikan hanya sarpras yang bisa akses
-if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] != 'sarpras') {
+// Keamanan: hanya sarpras
+if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'sarpras') {
     header("Location: login.php?error=access_denied");
     exit();
 }
@@ -23,22 +17,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $peminjaman_id = $_POST['peminjaman_id'];
     $status_baru   = $_POST['action']; // 'Disetujui' atau 'Ditolak'
 
-    if (in_array($status_baru, ['Disetujui','Ditolak'])) {
+    if ($status_baru === 'Disetujui') {
+        // Panggil stored procedure untuk persetujuan
+        $stmt = $conn->prepare("CALL sp_approve_peminjaman(?, ?)");
+        $stmt->bind_param("ss", $peminjaman_id, $sarpras_id);
+
+        if ($stmt->execute()) {
+            $status_msg = "<div class='alert alert-success'>Status permohonan berhasil diperbarui.</div>";
+        } else {
+            $status_msg = "<div class='alert alert-danger'>Gagal memperbarui status: " . $stmt->error . "</div>";
+        }
+        $stmt->close();
+        do { $conn->next_result(); } while ($conn->more_results());
+    } elseif ($status_baru === 'Ditolak') {
+        // Manual update jika ditolak
         $query_update = "
             UPDATE Peminjaman_Ruangan 
-            SET Status_peminja   = ?, 
+            SET Status_peminja = 'Ditolak', 
                 Sarpras_ID_sarpras = ?, 
-                Tanggal_Terbit     = NOW()
+                Tanggal_Terbit = NOW()
             WHERE ID_Peminjaman = ?
               AND Status_peminja = 'Menunggu'
         ";
         $stmt = $conn->prepare($query_update);
-        $stmt->bind_param("sss", $status_baru, $sarpras_id, $peminjaman_id);
-
+        $stmt->bind_param("ss", $sarpras_id, $peminjaman_id);
         if ($stmt->execute() && $stmt->affected_rows > 0) {
-            $status_msg = "<div class='alert alert-success'>Status permohonan berhasil diperbarui.</div>";
+            $status_msg = "<div class='alert alert-success'>Permohonan ditolak.</div>";
         } else {
-            $status_msg = "<div class='alert alert-danger'>Gagal memperbarui status. Mungkin sudah diproses.</div>";
+            $status_msg = "<div class='alert alert-danger'>Gagal menolak permohonan.</div>";
         }
         $stmt->close();
     }
@@ -52,16 +58,17 @@ $query_peminjaman = "
         p.Ruangan_tujuan,
         p.Status_peminja,
         r.Nama_Ruangan,
-        a.Nama_admin
+        a.Nama_admin,
+        p.Tanggal_Terbit
     FROM Peminjaman_Ruangan p
     JOIN Ruangan r ON p.Ruangan_ID_Ruangan = r.ID_Ruangan
-    JOIN admin a   ON p.admin_ID_admin       = a.ID_Admin
+    JOIN admin a   ON p.admin_ID_admin     = a.ID_Admin
     ORDER BY 
       FIELD(p.Status_peminja, 'Menunggu','Disetujui','Ditolak'),
       p.Tanggal_Pinjam DESC
 ";
 $result = $conn->query($query_peminjaman);
-$peminjaman_list = $result->fetch_all(MYSQLI_ASSOC);
+$peminjaman_list = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 ?>
 
 <div class="container mt-5">
@@ -89,7 +96,7 @@ $peminjaman_list = $result->fetch_all(MYSQLI_ASSOC);
                         <?php if (count($peminjaman_list) > 0): ?>
                             <?php foreach ($peminjaman_list as $item): ?>
                             <tr>
-                                <td><?php echo date('d M Y', strtotime($item['Tanggal_Terbit'] ?? $item['Tanggal_Pinjam'])); ?></td>
+                                <td><?php echo $item['Tanggal_Terbit'] ? date('d M Y', strtotime($item['Tanggal_Terbit'])) : '-'; ?></td>
                                 <td class="fw-bold"><?php echo date('d M Y, H:i', strtotime($item['Tanggal_Pinjam'])); ?></td>
                                 <td><?php echo htmlspecialchars($item['Nama_admin']); ?></td>
                                 <td><?php echo htmlspecialchars($item['Nama_Ruangan']); ?></td>
@@ -128,4 +135,4 @@ $peminjaman_list = $result->fetch_all(MYSQLI_ASSOC);
     </div>
 </div>
 
-<?php include('includes/footer.php'); ?>
+<?php require_once 'includes/footer.php'; ?>
