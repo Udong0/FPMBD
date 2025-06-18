@@ -1,6 +1,5 @@
 <?php
 // LOKASI: /myitstutor/includes/header.php
-// Versi ini kompatibel dengan logika "satu peran, satu dashboard".
 
 session_start();
 ?>
@@ -14,8 +13,6 @@ session_start();
 
     <!-- Bootstrap CSS via CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Anda bisa menambahkan file css kustom di sini jika perlu -->
-    <!-- <link href="css/style.css" rel="stylesheet"> -->
 </head>
 <body class="bg-light">
 
@@ -31,10 +28,14 @@ session_start();
                     <!-- Menu jika user sudah login -->
                     <li class="nav-item">
                         <?php
-                            // PERBAIKAN: Membuat link dashboard yang dinamis
+                            // Membuat link dashboard yang dinamis
                             $dashboard_link = "dashboard_" . $_SESSION['user_role'] . ".php";
                         ?>
                         <a class="nav-link" href="<?php echo $dashboard_link; ?>">Dashboard</a>
+                    </li>
+                    <!-- FITUR YANG HILANG DITAMBAHKAN KEMBALI DI SINI -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="profil.php?id=<?php echo $_SESSION['user_id']; ?>">Profil Saya</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="logout.php">Logout</a>
