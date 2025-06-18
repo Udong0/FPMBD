@@ -269,6 +269,8 @@ $user_nama = $_SESSION['user_nama'];
     <a href="view_tutors.php" class="list-group-item list-group-item-action">Daftar Tutor</a>
     <a href="view_kelas.php" class="list-group-item list-group-item-action">Daftar Kelas</a>
     <a href="view_transaksi.php" class="list-group-item list-group-item-action">Riwayat Transaksi</a>
+    <a href="laporan_lanjutan.php" class="list-group-item list-group-item-action bg-light text-primary fw-bold"><i class="fas fa-chart-line me-2"></i>Laporan Lanjutan & Statistik</a>
+
 </div>
 
 <?php
